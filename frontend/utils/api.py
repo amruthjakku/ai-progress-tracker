@@ -28,7 +28,7 @@ class APIClient:
             headers.pop("Content-Type", None)
         
         try:
-            response = requests.request(method, url, headers=headers, **kwargs)
+            response = requests.request(method, url, headers=headers, timeout=30, **kwargs)
             
             if response.status_code == 401:
                 st.session_state.token = None
@@ -36,17 +36,27 @@ class APIClient:
                 return {"error": "Session expired. Please login again."}
             
             if response.status_code >= 400:
-                error = response.json().get("detail", "An error occurred")
+                try:
+                    error_data = response.json()
+                    error = error_data.get("detail", str(error_data))
+                except:
+                    error = f"Server error ({response.status_code}): {response.text[:200] if response.text else 'No response'}"
                 return {"error": error}
             
             if response.status_code == 204:
                 return {"success": True}
             
+            # Handle empty response
+            if not response.text:
+                return {"error": "Server returned empty response"}
+            
             return response.json()
         except requests.exceptions.ConnectionError:
-            return {"error": "Cannot connect to server. Is the backend running?"}
+            return {"error": "Cannot connect to server. Is the backend running at http://localhost:8000?"}
+        except requests.exceptions.JSONDecodeError as e:
+            return {"error": f"Invalid response from server: {str(e)}"}
         except Exception as e:
-            return {"error": str(e)}
+            return {"error": f"Request failed: {str(e)}"}
     
     # ============ Auth ============
     def register(self, email: str, password: str, name: str, role: str = "student") -> Dict:
