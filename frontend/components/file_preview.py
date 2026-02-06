@@ -32,21 +32,18 @@ def show_file_preview(submission_id: int, file_type: str, height: int = 600):
                 # Encode PDF as base64
                 pdf_base64 = base64.b64encode(response.content).decode('utf-8')
                 
-                # Debug info
-                st.write(f"PDF loaded successfully ({len(response.content)} bytes)")
-                
-                # Use object tag instead of iframe - more reliable for PDFs
-                pdf_display = f'''
+                # Use generic HTML component which handles large base64 strings better than markdown
+                pdf_html = f'''
                 <object
                     data="data:application/pdf;base64,{pdf_base64}"
                     type="application/pdf"
                     width="100%"
                     height="{height}px"
                 >
-                    <p>Browser does not support PDF viewing. <a href="{preview_url}">Download PDF</a></p>
+                    <p>Browser does not support PDF viewing. <a href="{preview_url}" target="_blank">Download PDF</a></p>
                 </object>
                 '''
-                st.markdown(pdf_display, unsafe_allow_html=True)
+                components.html(pdf_html, height=height, scrolling=True)
             else:
                 st.warning(f"Could not load PDF (Status: {response.status_code})")
             
