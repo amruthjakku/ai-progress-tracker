@@ -89,6 +89,8 @@ else:
     # Main content - Welcome page
     st.markdown('<p class="main-header">🎓 Assignment Platform</p>', unsafe_allow_html=True)
     
+    role = st.session_state.user.get('role', 'student')
+    
     if role == "admin":
         st.markdown("""
         ### Welcome, Admin!
