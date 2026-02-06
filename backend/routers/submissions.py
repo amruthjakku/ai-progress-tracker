@@ -114,12 +114,23 @@ def list_submissions(
     # Transform response
     submissions = []
     for sub in result.data:
+        reviews = sub.get("reviews")
+        marks = None
+        feedback = None
+        
+        # Safely extract review data
+        if reviews and isinstance(reviews, list) and len(reviews) > 0:
+            first_review = reviews[0]
+            if isinstance(first_review, dict):
+                marks = first_review.get("marks")
+                feedback = first_review.get("feedback")
+        
         submission = {
             **sub,
             "student_name": sub.get("users", {}).get("name") if sub.get("users") else None,
             "assignment_title": sub.get("assignments", {}).get("title") if sub.get("assignments") else None,
-            "marks": sub.get("reviews", [{}])[0].get("marks") if sub.get("reviews") else None,
-            "feedback": sub.get("reviews", [{}])[0].get("feedback") if sub.get("reviews") else None,
+            "marks": marks,
+            "feedback": feedback,
         }
         submissions.append(submission)
     

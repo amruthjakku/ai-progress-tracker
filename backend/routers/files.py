@@ -10,7 +10,7 @@ from typing import Optional
 
 from database import get_db
 from schemas import TokenData, UserRole
-from utils.auth import get_current_user
+from utils.auth import get_current_user, get_current_user_flexible
 from config import get_settings
 from services.file_preview import get_file_preview, get_preview_content_type
 
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/files", tags=["Files"])
 async def preview_file(
     submission_id: int,
     page: Optional[int] = None,
-    current_user: TokenData = Depends(get_current_user)
+    current_user: TokenData = Depends(get_current_user_flexible)
 ):
     """
     Get file preview for a submission

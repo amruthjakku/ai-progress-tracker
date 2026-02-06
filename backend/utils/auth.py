@@ -5,13 +5,12 @@ from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends, HTTPException, status, Query
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordBearer
 
 from config import get_settings
 from schemas import TokenData, UserRole
 
-settings = get_settings()
 settings = get_settings()
 # Switch to argon2 which is more robust and doesn't have the 72 byte limit or dependency issues on Windows
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
@@ -61,6 +60,47 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             headers={"WWW-Authenticate": "Bearer"},
         )
     return token_data
+
+
+# Optional OAuth2 scheme for flexible auth
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="auth/login", auto_error=False)
+
+def get_current_user_flexible(
+    token_header: Optional[str] = Depends(oauth2_scheme_optional),
+    token: Optional[str] = Query(None)
+) -> TokenData:
+    """
+    Get current user from token in header OR query parameter.
+    Used for endpoints that need to work in iframes (like file previews).
+    """
+    auth_token = token if token else token_header
+    
+    if not auth_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    try:
+        payload = jwt.decode(auth_token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+        user_id: str = payload.get("sub")
+        role: str = payload.get("role")
+        
+        if user_id is None or role is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload"
+            )
+        
+        return TokenData(user_id=int(user_id), email=payload.get("email"), role=UserRole(role))
+    
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 async def require_admin(current_user: TokenData = Depends(get_current_user)) -> TokenData:

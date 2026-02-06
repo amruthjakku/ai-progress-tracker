@@ -100,3 +100,6 @@ if uploaded_file:
                 st.success("✅ Assignment submitted successfully!")
                 st.balloons()
                 st.info("You can view your submission in 'My Grades' section.")
+                import time
+                time.sleep(2)
+                st.rerun()  # Refresh page to update available assignments

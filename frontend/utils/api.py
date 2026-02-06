@@ -118,6 +118,8 @@ class APIClient:
     
     # ============ Reviews ============
     def create_review(self, submission_id: int, marks: int, feedback: str) -> Dict:
+        # Clear submissions cache so grades reflect immediately
+        self.list_submissions.clear()
         return self._request("POST", "/reviews/", json={
             "submission_id": submission_id,
             "marks": marks,
@@ -130,8 +132,18 @@ class APIClient:
     
     def get_file_preview_url(self, submission_id: int, page: Optional[int] = None) -> str:
         url = f"{self.base_url}/files/preview/{submission_id}"
+        params = []
+        
+        # Add token as query parameter for iframe compatibility
+        if "token" in st.session_state and st.session_state.token:
+            params.append(f"token={st.session_state.token}")
+        
         if page:
-            url += f"?page={page}"
+            params.append(f"page={page}")
+        
+        if params:
+            url += "?" + "&".join(params)
+        
         return url
     
     def get_file_download_url(self, submission_id: int) -> str:

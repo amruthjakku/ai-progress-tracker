@@ -18,13 +18,13 @@ def render_sidebar():
         
         # Navigation
         if role == "admin":
-            st.page_link("pages/1_Admin_Dashboard.py", label="📊 Dashboard", icon="📊")
-            st.page_link("pages/2_Manage_Assignments.py", label="📝 Manage Assignments", icon="📝")
-            st.page_link("pages/3_Review_Submissions.py", label="✅ Review Submissions", icon="✅")
+            st.page_link("pages/1_Admin_Dashboard.py", label="📊 Dashboard")
+            st.page_link("pages/2_Manage_Assignments.py", label="📝 Manage Assignments")
+            st.page_link("pages/3_Review_Submissions.py", label="✅ Review Submissions")
         else:
-            st.page_link("pages/1_Student_Dashboard.py", label="📊 My Dashboard", icon="📊")
-            st.page_link("pages/2_Submit_Assignment.py", label="📤 Submit Assignment", icon="📤")
-            st.page_link("pages/3_My_Grades.py", label="📈 My Grades", icon="📈")
+            st.page_link("pages/1_Student_Dashboard.py", label="📊 My Dashboard")
+            st.page_link("pages/2_Submit_Assignment.py", label="📤 Submit Assignment")
+            st.page_link("pages/3_My_Grades.py", label="📈 My Grades")
         
         st.markdown("---")
         if st.button("🚪 Logout", use_container_width=True):
