@@ -29,6 +29,9 @@ def show_file_preview(submission_id: int, file_type: str, height: int = 600):
             # Download PDF content
             response = requests.get(preview_url, timeout=30)
             if response.status_code == 200 and len(response.content) > 0:
+                # Encode PDF as base64
+                pdf_base64 = base64.b64encode(response.content).decode('utf-8')
+                
                 # Use PDF.js (Mozilla's PDF viewer) to render content directly via JavaScript
                 # This bypasses browser PDF plugin restrictions and iframe sandbox issues
                 pdf_viewer_html = f"""
