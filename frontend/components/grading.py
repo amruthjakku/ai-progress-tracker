@@ -17,85 +17,67 @@ def show_grading_form(submission_id: int, max_marks: int = 100, current_marks: i
     """
     is_update = current_marks is not None
     
-    # Initialize session state for marks if not exists
-    if f"marks_{submission_id}" not in st.session_state:
-        st.session_state[f"marks_{submission_id}"] = current_marks if current_marks is not None else 0
-    
-    # Callback to sync slider -> number
-    def update_from_slider():
-        st.session_state[f"marks_{submission_id}"] = st.session_state[f"slider_{submission_id}"]
-
-    # Callback to sync number -> slider
-    def update_from_number():
-        st.session_state[f"marks_{submission_id}"] = st.session_state[f"number_{submission_id}"]
-
-    # Container for the grading interface
-    st.markdown("### 📝 Grade Submission")
     if is_update:
+        st.subheader("✏️ Update Grade")
         st.info(f"Current grade: **{current_marks}/{max_marks}**")
+    else:
+        st.subheader("📝 Grade Submission")
+    
+    with st.form(f"grading_form_{submission_id}"):
+        # Marks input
+        marks = st.number_input(
+            "Marks",
+            min_value=0,
+            max_value=max_marks,
+            value=current_marks if current_marks is not None else 0,
+            help=f"Enter marks out of {max_marks}"
+        )
+        
+        # Marks slider removed to avoid confusion/sync issues
+        # Use the number input above as the single source of truth
+        
+        # Feedback textarea
+        feedback = st.text_area(
+            "Feedback",
+            value=current_feedback or "",
+            placeholder="Enter feedback for the student...",
+            height=150
+        )
+        
+        # Quick feedback buttons
+        st.markdown("**Quick Feedback:**")
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            if st.form_submit_button("👍 Excellent", use_container_width=True):
+                feedback = "Excellent work! Keep it up."
+        
+        with col2:
+            if st.form_submit_button("👌 Good", use_container_width=True):
+                feedback = "Good effort. Minor improvements needed."
+        
+        with col3:
+            if st.form_submit_button("📝 Needs Work", use_container_width=True):
+                feedback = "Needs significant improvement. Please review the requirements."
+        
+        st.markdown("---")
+        
+        # Submit button
+        button_text = "💾 Update Grade" if is_update else "💾 Save Grade"
+        submitted = st.form_submit_button(button_text, use_container_width=True, type="primary")
+        
+        if submitted:
+            # Validate marks
+            if marks < 0 or marks > max_marks:
+                st.error(f"Marks must be between 0 and {max_marks}")
+                return
 
-    # Marks Input (Number)
-    marks = st.number_input(
-        "Marks",
-        min_value=0,
-        max_value=max_marks,
-        value=st.session_state[f"marks_{submission_id}"],
-        key=f"number_{submission_id}",
-        on_change=update_from_number,
-        help=f"Enter marks out of {max_marks}"
-    )
-    
-    # Marks Slider (Syncs with above)
-    st.slider(
-        "Quick select",
-        min_value=0,
-        max_value=max_marks,
-        value=marks,
-        key=f"slider_{submission_id}",
-        on_change=update_from_slider,
-        label_visibility="collapsed"
-    )
-    
-    # Feedback
-    feedback = st.text_area(
-        "Feedback",
-        value=current_feedback or "",
-        placeholder="Enter feedback for the student...",
-        height=150,
-        key=f"feedback_{submission_id}"
-    )
-    
-    # Quick feedback buttons
-    st.markdown("**Quick Feedback:**")
-    col1, col2, col3 = st.columns(3)
-    
-    # Using callbacks for quick feedback to update the text area immediately
-    def set_feedback(text):
-        st.session_state[f"feedback_{submission_id}"] = text
-
-    with col1:
-        st.button("👍 Excellent", use_container_width=True, on_click=set_feedback, args=("Excellent work! Keep it up.",), key=f"btn_ex_{submission_id}")
-    
-    with col2:
-        st.button("👌 Good", use_container_width=True, on_click=set_feedback, args=("Good effort. Minor improvements needed.",), key=f"btn_good_{submission_id}")
-    
-    with col3:
-        st.button("📝 Needs Work", use_container_width=True, on_click=set_feedback, args=("Needs significant improvement. Please review the requirements.",), key=f"btn_work_{submission_id}")
-    
-    st.markdown("---")
-    
-    # Submit button (outside form now)
-    button_text = "💾 Update Grade" if is_update else "💾 Save Grade"
-    if st.button(button_text, type="primary", use_container_width=True, key=f"submit_{submission_id}"):
-        with st.spinner("Saving grade..."):
             result = api.create_review(submission_id, marks, feedback)
             
             if "error" in result:
                 st.error(result["error"])
             else:
                 st.success("✅ Grade saved successfully!")
-                # Force reload of submissions to update UI immediately
-                api.list_submissions.clear()
                 st.rerun()
 
 
