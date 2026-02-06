@@ -11,9 +11,12 @@ from utils.api import api
 st.set_page_config(page_title="Student Dashboard", page_icon="📊", layout="wide")
 
 from utils.rbac import check_access
+from components.sidebar import render_sidebar
 
 if not check_access(["student"]):
     st.stop()
+
+render_sidebar()
 
 user = st.session_state.user
 

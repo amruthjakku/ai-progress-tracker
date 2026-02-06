@@ -7,12 +7,13 @@ import plotly.express as px
 
 from utils.api import api
 from utils.rbac import check_access
-
-st.set_page_config(page_title="Admin Dashboard", page_icon="📊", layout="wide")
+from components.sidebar import render_sidebar
 
 
 if not check_access(["admin"]):
     st.stop()
+
+render_sidebar()
 
 user = st.session_state.user
 

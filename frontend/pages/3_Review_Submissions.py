@@ -13,9 +13,12 @@ from utils.api import api
 st.set_page_config(page_title="Review Submissions", page_icon="✅", layout="wide")
 
 from utils.rbac import check_access
+from components.sidebar import render_sidebar
 
 if not check_access(["admin"]):
     st.stop()
+
+render_sidebar()
 
 st.title("✅ Review Submissions")
 

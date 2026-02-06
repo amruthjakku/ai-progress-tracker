@@ -6,8 +6,10 @@ import extra_streamlit_components as stx
 import datetime
 
 def get_manager():
-    """Get cookie manager instance - must be called on each script run"""
-    return stx.CookieManager()
+    """Get cookie manager instance - uses session state to ensure single instance"""
+    if "_cookie_manager" not in st.session_state:
+        st.session_state._cookie_manager = stx.CookieManager()
+    return st.session_state._cookie_manager
 
 def get_cookie(name):
     cookie_manager = get_manager()
