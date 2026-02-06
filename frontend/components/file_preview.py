@@ -28,7 +28,7 @@ def show_file_preview(submission_id: int, file_type: str, height: int = 600):
         try:
             # Download PDF content
             response = requests.get(preview_url, timeout=30)
-            if response.status_code == 200:
+            if response.status_code == 200 and len(response.content) > 0:
                 # Encode PDF as base64
                 pdf_base64 = base64.b64encode(response.content).decode('utf-8')
                 
@@ -44,10 +44,13 @@ def show_file_preview(submission_id: int, file_type: str, height: int = 600):
                 '''
                 st.markdown(pdf_display, unsafe_allow_html=True)
             else:
-                st.error("Failed to load PDF")
-                st.markdown(f"[📥 Download PDF instead]({preview_url})")
+                st.warning(f"Could not load PDF (Status: {response.status_code})")
+            
+            # Always show download link as fallback
+            st.markdown(f"[📥 Download PDF]({preview_url})")
+            
         except Exception as e:
-            st.error(f"Could not load preview: {e}")
+            st.error(f"Preview error: {str(e)[:100]}")
             st.markdown(f"[📥 Download PDF]({preview_url})")
         
     elif file_type == "docx":
