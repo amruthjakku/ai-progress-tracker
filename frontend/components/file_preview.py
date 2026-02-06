@@ -29,21 +29,108 @@ def show_file_preview(submission_id: int, file_type: str, height: int = 600):
             # Download PDF content
             response = requests.get(preview_url, timeout=30)
             if response.status_code == 200 and len(response.content) > 0:
-                # Encode PDF as base64
-                pdf_base64 = base64.b64encode(response.content).decode('utf-8')
-                
-                # Use generic HTML component which handles large base64 strings better than markdown
-                pdf_html = f'''
-                <object
-                    data="data:application/pdf;base64,{pdf_base64}"
-                    type="application/pdf"
-                    width="100%"
-                    height="{height}px"
-                >
-                    <p>Browser does not support PDF viewing. <a href="{preview_url}" target="_blank">Download PDF</a></p>
-                </object>
-                '''
-                components.html(pdf_html, height=height, scrolling=True)
+                # Use PDF.js (Mozilla's PDF viewer) to render content directly via JavaScript
+                # This bypasses browser PDF plugin restrictions and iframe sandbox issues
+                pdf_viewer_html = f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+                    <style>
+                        body {{ margin: 0; padding: 0; background-color: #525659; display: flex; flex-direction: column; align-items: center; }}
+                        #the-canvas {{ border: 1px solid black; direction: ltr; margin-bottom: 10px; }}
+                        #controls {{ position: sticky; top: 0; background: #333; color: white; padding: 8px; width: 100%; text-align: center; z-index: 100; }}
+                        button {{ cursor: pointer; padding: 5px 10px; background: #444; color: white; border: 1px solid #666; }}
+                        button:hover {{ background: #555; }}
+                    </style>
+                </head>
+                <body>
+                    <div id="controls">
+                        <button id="prev">Previous</button>
+                        <span>Page: <span id="page_num"></span> / <span id="page_count"></span></span>
+                        <button id="next">Next</button>
+                        <a href="{preview_url}" target="_blank" style="color: white; margin-left: 10px; text-decoration: none;">Download</a>
+                    </div>
+                    <canvas id="the-canvas"></canvas>
+                    <script>
+                        const url = 'data:application/pdf;base64,{pdf_base64}';
+                        var pdfjsLib = window['pdfjs-dist/build/pdf'];
+                        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+                        var pdfDoc = null,
+                            pageNum = 1,
+                            pageRendering = false,
+                            pageNumPending = null,
+                            scale = 1.0,
+                            canvas = document.getElementById('the-canvas'),
+                            ctx = canvas.getContext('2d');
+
+                        function renderPage(num) {{
+                            pageRendering = true;
+                            pdfDoc.getPage(num).then(function(page) {{
+                                var viewport = page.getViewport({{scale: scale}});
+                                // Calculate scale to fit width
+                                var desiredWidth = window.innerWidth - 40;
+                                var scaleRequired = desiredWidth / viewport.width;
+                                viewport = page.getViewport({{scale: scaleRequired}});
+                                
+                                canvas.height = viewport.height;
+                                canvas.width = viewport.width;
+
+                                var renderContext = {{
+                                    canvasContext: ctx,
+                                    viewport: viewport
+                                }};
+                                var renderTask = page.render(renderContext);
+
+                                renderTask.promise.then(function() {{
+                                    pageRendering = false;
+                                    if (pageNumPending !== null) {{
+                                        renderPage(pageNumPending);
+                                        pageNumPending = null;
+                                    }}
+                                }});
+                            }});
+
+                            document.getElementById('page_num').textContent = num;
+                        }}
+
+                        function queueRenderPage(num) {{
+                            if (pageRendering) {{
+                                pageNumPending = num;
+                            }} else {{
+                                renderPage(num);
+                            }}
+                        }}
+
+                        function onPrevPage() {{
+                            if (pageNum <= 1) {{
+                                return;
+                            }}
+                            pageNum--;
+                            queueRenderPage(pageNum);
+                        }}
+                        document.getElementById('prev').addEventListener('click', onPrevPage);
+
+                        function onNextPage() {{
+                            if (pageNum >= pdfDoc.numPages) {{
+                                return;
+                            }}
+                            pageNum++;
+                            queueRenderPage(pageNum);
+                        }}
+                        document.getElementById('next').addEventListener('click', onNextPage);
+
+                        pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {{
+                            pdfDoc = pdfDoc_;
+                            document.getElementById('page_count').textContent = pdfDoc.numPages;
+                            renderPage(pageNum);
+                        }});
+                    </script>
+                </body>
+                </html>
+                """
+                components.html(pdf_viewer_html, height=height, scrolling=True)
             else:
                 st.warning(f"Could not load PDF (Status: {response.status_code})")
             
