@@ -243,8 +243,8 @@ class SupabaseAPI:
             # Generate unique filename
             unique_name = f"{user_id}_{assignment_id}_{uuid.uuid4().hex[:8]}_{file_name}"
             
-            # Upload to Supabase Storage
-            storage_path = f"submissions/{unique_name}"
+            # Upload to Supabase Storage (just the path, not including bucket name)
+            storage_path = unique_name
             
             try:
                 self.db.storage.from_("submissions").upload(
@@ -339,6 +339,14 @@ class SupabaseAPI:
             file_path = result.data[0].get("file_path")
             if not file_path:
                 return None
+            
+            # Handle old file paths that may have different formats
+            # Remove 'submissions/' prefix if present (from old format)
+            if file_path.startswith("submissions/"):
+                file_path = file_path[len("submissions/"):]
+            # Also handle 'uploads/' prefix from legacy backend
+            elif file_path.startswith("uploads/"):
+                file_path = file_path[len("uploads/"):]
             
             # Get signed URL (valid for 1 hour)
             url_data = self.db.storage.from_("submissions").create_signed_url(file_path, 3600)
