@@ -3,6 +3,8 @@ File Preview Component - Display files in browser
 """
 import streamlit as st
 import streamlit.components.v1 as components
+import requests
+import base64
 from utils.supabase_api import api
 
 
@@ -22,23 +24,39 @@ def show_file_preview(submission_id: int, file_type: str, height: int = 600):
         return
     
     if file_type == "pdf":
-        # PDF: Use iframe with PDF viewer
-        st.markdown(f"""
-        <iframe 
-            src="{preview_url}" 
-            width="100%" 
-            height="{height}px" 
-            style="border: 1px solid #ddd; border-radius: 8px;"
-        ></iframe>
-        """, unsafe_allow_html=True)
+        # PDF: Fetch and embed as base64 to avoid iframe blocking
+        try:
+            # Download PDF content
+            response = requests.get(preview_url, timeout=30)
+            if response.status_code == 200:
+                # Encode PDF as base64
+                pdf_base64 = base64.b64encode(response.content).decode('utf-8')
+                
+                # Embed PDF using data URL (avoids third-party iframe issues)
+                pdf_display = f'''
+                <iframe
+                    src="data:application/pdf;base64,{pdf_base64}"
+                    width="100%"
+                    height="{height}px"
+                    style="border: 1px solid #ddd; border-radius: 8px;"
+                    type="application/pdf"
+                ></iframe>
+                '''
+                st.markdown(pdf_display, unsafe_allow_html=True)
+            else:
+                st.error("Failed to load PDF")
+                st.markdown(f"[📥 Download PDF instead]({preview_url})")
+        except Exception as e:
+            st.error(f"Could not load preview: {e}")
+            st.markdown(f"[📥 Download PDF]({preview_url})")
         
     elif file_type == "docx":
-        # DOCX: Download link (can't render in frontend without backend conversion)
+        # DOCX: Download link
         st.info("📄 Word documents can be previewed after download")
         st.markdown(f"[📥 Download Document]({preview_url})")
             
     elif file_type in ["pptx", "ppt"]:
-        # PPT: Download link (can't render in frontend without backend conversion)
+        # PPT: Download link 
         st.info("📊 Presentations can be previewed after download")
         st.markdown(f"[📥 Download Presentation]({preview_url})")
     else:

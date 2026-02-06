@@ -70,8 +70,11 @@ else:
             with col3:
                 status = sub.get('status', 'pending')
                 if status == "reviewed":
-                    marks = sub.get('marks', 'N/A')
-                    st.markdown(f"✅ **{marks}** marks")
+                    marks = sub.get('marks')
+                    if marks is not None:
+                        st.markdown(f"✅ **{marks}** marks")
+                    else:
+                        st.markdown("✅ Graded (no marks)")
                 else:
                     st.markdown("🔄 Pending")
             
