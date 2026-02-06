@@ -32,15 +32,19 @@ def show_file_preview(submission_id: int, file_type: str, height: int = 600):
                 # Encode PDF as base64
                 pdf_base64 = base64.b64encode(response.content).decode('utf-8')
                 
-                # Embed PDF using data URL (avoids third-party iframe issues)
+                # Debug info
+                st.write(f"PDF loaded successfully ({len(response.content)} bytes)")
+                
+                # Use object tag instead of iframe - more reliable for PDFs
                 pdf_display = f'''
-                <iframe
-                    src="data:application/pdf;base64,{pdf_base64}"
+                <object
+                    data="data:application/pdf;base64,{pdf_base64}"
+                    type="application/pdf"
                     width="100%"
                     height="{height}px"
-                    style="border: 1px solid #ddd; border-radius: 8px;"
-                    type="application/pdf"
-                ></iframe>
+                >
+                    <p>Browser does not support PDF viewing. <a href="{preview_url}">Download PDF</a></p>
+                </object>
                 '''
                 st.markdown(pdf_display, unsafe_allow_html=True)
             else:
