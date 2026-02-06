@@ -77,11 +77,14 @@ class APIClient:
         return self._request("GET", "/auth/me")
     
     # ============ Assignments ============
-    def list_assignments(self) -> List[Dict]:
-        result = self._request("GET", "/assignments/")
+    @st.cache_data(ttl=60)
+    def list_assignments(_self) -> List[Dict]:
+        result = _self._request("GET", "/assignments/")
         return result if isinstance(result, list) else []
     
     def create_assignment(self, title: str, description: str, due_date: str, max_marks: int) -> Dict:
+        # Clear cache when creating
+        self.list_assignments.clear()
         return self._request("POST", "/assignments/", json={
             "title": title,
             "description": description,
@@ -90,17 +93,22 @@ class APIClient:
         })
     
     def delete_assignment(self, assignment_id: int) -> Dict:
+        # Clear cache when deleting
+        self.list_assignments.clear()
         return self._request("DELETE", f"/assignments/{assignment_id}")
     
     # ============ Submissions ============
-    def list_submissions(self) -> List[Dict]:
-        result = self._request("GET", "/submissions/")
+    @st.cache_data(ttl=60)
+    def list_submissions(_self) -> List[Dict]:
+        result = _self._request("GET", "/submissions/")
         return result if isinstance(result, list) else []
     
     def get_submission(self, submission_id: int) -> Dict:
         return self._request("GET", f"/submissions/{submission_id}")
     
     def submit_assignment(self, assignment_id: int, file) -> Dict:
+        # Clear cache when submitting
+        self.list_submissions.clear()
         return self._request(
             "POST", 
             "/submissions/",

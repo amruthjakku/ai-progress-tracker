@@ -11,7 +11,7 @@ router = APIRouter(prefix="/assignments", tags=["Assignments"])
 
 
 @router.post("/", response_model=AssignmentResponse, status_code=status.HTTP_201_CREATED)
-async def create_assignment(
+def create_assignment(
     assignment: AssignmentCreate,
     current_user: TokenData = Depends(require_admin)
 ):
@@ -36,15 +36,19 @@ async def create_assignment(
 
 
 @router.get("/", response_model=List[AssignmentResponse])
-async def list_assignments(current_user: TokenData = Depends(get_current_user)):
-    """List all assignments"""
+def list_assignments(
+    skip: int = 0,
+    limit: int = 100,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """List all assignments with pagination"""
     db = get_db()
-    result = db.table("assignments").select("*").order("created_at", desc=True).execute()
+    result = db.table("assignments").select("*").order("created_at", desc=True).range(skip, skip + limit - 1).execute()
     return result.data
 
 
 @router.get("/{assignment_id}", response_model=AssignmentResponse)
-async def get_assignment(
+def get_assignment(
     assignment_id: int,
     current_user: TokenData = Depends(get_current_user)
 ):
@@ -62,7 +66,7 @@ async def get_assignment(
 
 
 @router.put("/{assignment_id}", response_model=AssignmentResponse)
-async def update_assignment(
+def update_assignment(
     assignment_id: int,
     assignment: AssignmentCreate,
     current_user: TokenData = Depends(require_admin)
@@ -87,7 +91,7 @@ async def update_assignment(
 
 
 @router.delete("/{assignment_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_assignment(
+def delete_assignment(
     assignment_id: int,
     current_user: TokenData = Depends(require_admin)
 ):

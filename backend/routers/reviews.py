@@ -11,7 +11,7 @@ router = APIRouter(prefix="/reviews", tags=["Reviews"])
 
 
 @router.post("/", response_model=ReviewResponse, status_code=status.HTTP_201_CREATED)
-async def create_review(
+def create_review(
     review: ReviewCreate,
     current_user: TokenData = Depends(require_admin)
 ):
@@ -71,7 +71,7 @@ async def create_review(
 
 
 @router.get("/submission/{submission_id}", response_model=ReviewResponse)
-async def get_review_by_submission(
+def get_review_by_submission(
     submission_id: int,
     current_user: TokenData = Depends(require_admin)
 ):

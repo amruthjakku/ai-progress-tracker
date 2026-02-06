@@ -26,6 +26,19 @@ class Settings(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"
+
+# Explicitly load dotenv to handle cases where pydantic doesn't find it
+import os
+from dotenv import load_dotenv
+
+# Try to find .env in current or parent directory
+if os.path.exists(".env"):
+    load_dotenv(".env")
+elif os.path.exists("backend/.env"):
+    load_dotenv("backend/.env")
+elif os.path.exists("../.env"):
+    load_dotenv("../.env")
 
 
 @lru_cache()

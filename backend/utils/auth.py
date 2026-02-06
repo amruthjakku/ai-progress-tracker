@@ -12,7 +12,9 @@ from config import get_settings
 from schemas import TokenData, UserRole
 
 settings = get_settings()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+settings = get_settings()
+# Switch to argon2 which is more robust and doesn't have the 72 byte limit or dependency issues on Windows
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 security = HTTPBearer()
 
 
@@ -29,9 +31,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def create_access_token(user_id: int, role: UserRole) -> str:
     """Create JWT access token"""
     expire = datetime.utcnow() + timedelta(minutes=settings.JWT_EXPIRE_MINUTES)
+    role_value = role.value if hasattr(role, "value") else str(role)
     to_encode = {
         "sub": str(user_id),
-        "role": role.value,
+        "role": role_value,
         "exp": expire
     }
     return jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)

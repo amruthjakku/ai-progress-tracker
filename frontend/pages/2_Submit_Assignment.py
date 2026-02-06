@@ -10,14 +10,12 @@ from utils.api import api
 
 st.set_page_config(page_title="Submit Assignment", page_icon="📤", layout="wide")
 
-if not require_auth():
-    st.warning("Please login to access this page")
+from utils.rbac import check_access
+
+if not check_access(["student"]):
     st.stop()
 
 user = st.session_state.user
-if user.get("role") != "student":
-    st.error("This page is for students only")
-    st.stop()
 
 st.title("📤 Submit Assignment")
 

@@ -12,6 +12,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(user: UserCreate):
     """Register a new user"""
+    print(f"DEBUG: Entering register handler for {user.email}")
     # Import logger from database (or set up new one)
     import logging
     logger = logging.getLogger("api.auth")
@@ -36,12 +37,21 @@ async def register(user: UserCreate):
         logger.info("Creating new user...")
         hashed_pw = hash_password(user.password)
         
+        # Debug role value
+        logger.info(f"DEBUG: user.role type: {type(user.role)}")
+        logger.info(f"DEBUG: user.role value: {user.role}")
+        role_value = user.role.value if hasattr(user.role, "value") else str(user.role)
+        logger.info(f"DEBUG: Final role value to DB: '{role_value}'")
+
         user_data = {
             "email": user.email,
             "name": user.name,
             "password_hash": hashed_pw,
-            "role": user.role.value
         }
+        
+        # Only include role if it's not student (default), to avoid potential constraint issues
+        if role_value != "student":
+            user_data["role"] = role_value
         
         result = db.table("users").insert(user_data).execute()
         

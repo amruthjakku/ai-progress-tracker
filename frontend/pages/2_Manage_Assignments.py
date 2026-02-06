@@ -2,21 +2,16 @@
 Manage Assignments Page - Create and manage assignments (Admin only)
 """
 import streamlit as st
-from datetime import datetime, timedelta
+from datetime import datetime
 import sys
 sys.path.append("..")
 
-from components.auth import require_auth, require_admin
 from utils.api import api
+from utils.rbac import check_access
 
 st.set_page_config(page_title="Manage Assignments", page_icon="📝", layout="wide")
 
-if not require_auth():
-    st.warning("Please login to access this page")
-    st.stop()
-
-if not require_admin():
-    st.error("⛔ Admin access required")
+if not check_access(["admin"]):
     st.stop()
 
 st.title("📝 Manage Assignments")

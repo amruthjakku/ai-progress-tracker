@@ -92,7 +92,11 @@ async def submit_assignment(
 
 
 @router.get("/", response_model=List[SubmissionWithDetails])
-async def list_submissions(current_user: TokenData = Depends(get_current_user)):
+def list_submissions(
+    skip: int = 0,
+    limit: int = 100,
+    current_user: TokenData = Depends(get_current_user)
+):
     """List submissions - students see own, admins see all"""
     db = get_db()
     
@@ -100,12 +104,12 @@ async def list_submissions(current_user: TokenData = Depends(get_current_user)):
         # Admin sees all submissions with student info
         result = db.table("submissions").select(
             "*, users!student_id(name), assignments!assignment_id(title), reviews(*)"
-        ).order("submitted_at", desc=True).execute()
+        ).order("submitted_at", desc=True).range(skip, skip + limit - 1).execute()
     else:
         # Student sees only their submissions
         result = db.table("submissions").select(
             "*, assignments!assignment_id(title), reviews(*)"
-        ).eq("student_id", current_user.user_id).order("submitted_at", desc=True).execute()
+        ).eq("student_id", current_user.user_id).order("submitted_at", desc=True).range(skip, skip + limit - 1).execute()
     
     # Transform response
     submissions = []
@@ -123,7 +127,7 @@ async def list_submissions(current_user: TokenData = Depends(get_current_user)):
 
 
 @router.get("/{submission_id}", response_model=SubmissionWithDetails)
-async def get_submission(
+def get_submission(
     submission_id: int,
     current_user: TokenData = Depends(get_current_user)
 ):

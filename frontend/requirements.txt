@@ -2,3 +2,5 @@ streamlit>=1.30.0
 requests>=2.31.0
 python-dotenv>=1.0.0
 Pillow>=10.2.0
+extra-streamlit-components>=0.1.70
+plotly

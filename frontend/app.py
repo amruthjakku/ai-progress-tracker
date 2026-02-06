@@ -3,6 +3,12 @@ Assignment Platform - Main Streamlit App
 """
 import streamlit as st
 from components.auth import show_auth_page, require_auth, logout
+from utils.session import get_cookie, get_manager
+from utils.api import api
+import time
+
+# Initialize cookie manager (must be done at top level)
+cookie_manager = get_manager()
 
 # Page configuration
 st.set_page_config(
@@ -15,6 +21,11 @@ st.set_page_config(
 # Custom CSS
 st.markdown("""
 <style>
+    /* Hide default Streamlit sidebar navigation */
+    [data-testid="stSidebarNav"] {
+        display: none !important;
+    }
+
     .main-header {
         font-size: 2.5rem;
         font-weight: bold;
@@ -52,6 +63,20 @@ if "token" not in st.session_state:
     st.session_state.token = None
 if "user" not in st.session_state:
     st.session_state.user = None
+
+# Attempt to restore session from cookie
+if not st.session_state.token:
+    token_cookie = get_cookie("token")
+    if token_cookie:
+        st.session_state.token = token_cookie
+        # Validate token and get user
+        user = api.get_me()
+        if "error" not in user:
+            st.session_state.user = user
+            st.rerun()
+        else:
+            # Invalid token
+            st.session_state.token = None
 
 # Check authentication
 if not require_auth():

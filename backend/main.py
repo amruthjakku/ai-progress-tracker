@@ -17,7 +17,8 @@ os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 app = FastAPI(
     title=settings.APP_NAME,
     description="Backend API for Assignment Submission & Review Platform",
-    version="1.0.0"
+    version="1.0.0",
+    debug=settings.DEBUG
 )
 
 # CORS middleware for Streamlit frontend
@@ -36,8 +37,33 @@ app.include_router(submissions.router)
 app.include_router(reviews.router)
 app.include_router(files.router)
 
+import traceback
+import logging
+from fastapi import Request
+from fastapi.responses import JSONResponse
 
-@app.get("/")
+# Configure logging to file
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("backend.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"🔥 GLOBAL EXCEPTION: {exc}")
+    logger.error(traceback.format_exc())
+    print(f"🔥 GLOBAL EXCEPTION: {exc}")
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal Server Error: {str(exc)}"},
+    )
+
 async def root():
     """Health check endpoint"""
     return {
@@ -55,3 +81,8 @@ async def health_check():
         "database": "supabase",
         "upload_dir": settings.UPLOAD_DIR
     }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

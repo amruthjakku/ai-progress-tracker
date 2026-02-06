@@ -2,20 +2,16 @@
 Admin Dashboard Page
 """
 import streamlit as st
-import sys
-sys.path.append("..")
+import pandas as pd
+import plotly.express as px
 
-from components.auth import require_auth, require_admin
 from utils.api import api
+from utils.rbac import check_access
 
 st.set_page_config(page_title="Admin Dashboard", page_icon="📊", layout="wide")
 
-if not require_auth():
-    st.warning("Please login to access this page")
-    st.stop()
 
-if not require_admin():
-    st.error("⛔ Admin access required")
+if not check_access(["admin"]):
     st.stop()
 
 user = st.session_state.user

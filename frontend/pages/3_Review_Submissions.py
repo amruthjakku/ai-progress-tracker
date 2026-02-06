@@ -12,12 +12,9 @@ from utils.api import api
 
 st.set_page_config(page_title="Review Submissions", page_icon="✅", layout="wide")
 
-if not require_auth():
-    st.warning("Please login to access this page")
-    st.stop()
+from utils.rbac import check_access
 
-if not require_admin():
-    st.error("⛔ Admin access required")
+if not check_access(["admin"]):
     st.stop()
 
 st.title("✅ Review Submissions")

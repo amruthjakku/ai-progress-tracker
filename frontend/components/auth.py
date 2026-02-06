@@ -3,6 +3,7 @@ Authentication Components - Login & Register forms
 """
 import streamlit as st
 from utils.api import api
+from utils.session import set_cookie, delete_cookie
 
 
 def show_login_form():
@@ -29,6 +30,8 @@ def show_login_form():
                 user = api.get_me()
                 if "error" not in user:
                     st.session_state.user = user
+                    # Persist session
+                    set_cookie("token", result["access_token"])
                     st.success("Login successful!")
                     st.rerun()
 
@@ -85,6 +88,7 @@ def logout():
     """Clear session and logout"""
     st.session_state.token = None
     st.session_state.user = None
+    delete_cookie("token")
     st.rerun()
 
 
