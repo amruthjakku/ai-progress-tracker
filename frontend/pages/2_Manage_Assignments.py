@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import sys
 sys.path.append("..")
 
-from utils.api import api
+from utils.supabase_api import api
 from utils.rbac import check_access
 from components.sidebar import render_sidebar
 

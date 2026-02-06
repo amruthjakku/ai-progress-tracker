@@ -6,7 +6,7 @@ import sys
 sys.path.append("..")
 
 from components.auth import require_auth
-from utils.api import api
+from utils.supabase_api import api
 
 st.set_page_config(page_title="Submit Assignment", page_icon="📤", layout="wide")
 

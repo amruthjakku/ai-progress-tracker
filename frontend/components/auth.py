@@ -2,7 +2,7 @@
 Authentication Components - Login & Register forms
 """
 import streamlit as st
-from utils.api import api
+from utils.supabase_api import api
 from utils.session import set_cookie, delete_cookie
 
 
@@ -26,14 +26,12 @@ def show_login_form():
                 st.error(result["error"])
             else:
                 st.session_state.token = result["access_token"]
-                # Fetch user profile
-                user = api.get_me()
-                if "error" not in user:
-                    st.session_state.user = user
-                    # Persist session
-                    set_cookie("token", result["access_token"])
-                    st.success("Login successful!")
-                    st.rerun()
+                # User is returned directly from login
+                st.session_state.user = result["user"]
+                # Persist session
+                set_cookie("token", result["access_token"])
+                st.success("Login successful!")
+                st.rerun()
 
 
 def show_register_form():

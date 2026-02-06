@@ -8,7 +8,7 @@ sys.path.append("..")
 from components.auth import require_auth, require_admin
 from components.file_preview import show_file_preview, show_file_info
 from components.grading import show_grading_form
-from utils.api import api
+from utils.supabase_api import api
 
 st.set_page_config(page_title="Review Submissions", page_icon="✅", layout="wide")
 
@@ -94,8 +94,9 @@ for sub in filtered:
             show_file_preview(sub_id, file_type, height=500)
             
             # Download option
-            download_url = api.get_file_download_url(sub_id)
-            st.markdown(f"[📥 Download Original File]({download_url})")
+            download_url = api.get_file_url(sub_id)
+            if download_url:
+                st.markdown(f"[📥 Download Original File]({download_url})")
         
         with col2:
             st.markdown(f"**Student:** {sub.get('student_name', 'Unknown')}")

@@ -1,13 +1,10 @@
 """
 Frontend Configuration
 """
-import os
-from dotenv import load_dotenv
+import streamlit as st
 
-load_dotenv()
-
-# API Configuration
-API_URL = os.getenv("API_URL", "http://localhost:8000")
+# Configuration is loaded from .streamlit/secrets.toml
+# No longer using external API - Supabase is called directly
 
 # App Settings
 APP_TITLE = "Assignment Platform"

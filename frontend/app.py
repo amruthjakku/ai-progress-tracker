@@ -5,7 +5,7 @@ import streamlit as st
 from components.auth import show_auth_page, require_auth
 from components.sidebar import render_sidebar
 from utils.session import get_cookie, get_manager
-from utils.api import api
+from utils.supabase_api import api
 import time
 
 # Initialize cookie manager (must be done at top level)
@@ -70,13 +70,18 @@ if not st.session_state.token:
     token_cookie = get_cookie("token")
     if token_cookie:
         st.session_state.token = token_cookie
-        # Validate token and get user
-        user = api.get_me()
-        if "error" not in user:
-            st.session_state.user = user
-            st.rerun()
+        # Validate token and get user using token decoding
+        from utils.supabase_api import decode_token
+        token_data = decode_token(token_cookie)
+        if token_data:
+            # Fetch user from database
+            user = api.get_user(token_data["user_id"])
+            if "error" not in user:
+                st.session_state.user = user
+                st.rerun()
+            else:
+                st.session_state.token = None
         else:
-            # Invalid token
             st.session_state.token = None
 
 # Check authentication
@@ -111,7 +116,7 @@ else:
         """)
     
     # Quick stats
-    from utils.api import api
+    from utils.supabase_api import api
     
     st.markdown("---")
     st.subheader("📊 Quick Overview")

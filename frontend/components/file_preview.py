@@ -3,8 +3,7 @@ File Preview Component - Display files in browser
 """
 import streamlit as st
 import streamlit.components.v1 as components
-from utils.api import api
-from config import API_URL
+from utils.supabase_api import api
 
 
 def show_file_preview(submission_id: int, file_type: str, height: int = 600):
@@ -16,10 +15,11 @@ def show_file_preview(submission_id: int, file_type: str, height: int = 600):
         file_type: File extension (pdf, docx, pptx)
         height: Height of the preview component
     """
-    preview_url = api.get_file_preview_url(submission_id)
+    preview_url = api.get_file_url(submission_id)
     
-    # Add auth header for preview
-    token = st.session_state.get("token", "")
+    if not preview_url:
+        st.warning("File not available for preview")
+        return
     
     if file_type == "pdf":
         # PDF: Use iframe with PDF viewer
@@ -33,62 +33,17 @@ def show_file_preview(submission_id: int, file_type: str, height: int = 600):
         """, unsafe_allow_html=True)
         
     elif file_type == "docx":
-        # DOCX: Rendered as HTML
-        try:
-            import requests
-            headers = {"Authorization": f"Bearer {token}"}
-            response = requests.get(preview_url, headers=headers)
-            
-            if response.status_code == 200:
-                html_content = response.text
-                components.html(html_content, height=height, scrolling=True)
-            else:
-                st.error("Failed to load document preview")
-        except Exception as e:
-            st.error(f"Error loading preview: {e}")
+        # DOCX: Download link (can't render in frontend without backend conversion)
+        st.info("📄 Word documents can be previewed after download")
+        st.markdown(f"[📥 Download Document]({preview_url})")
             
     elif file_type in ["pptx", "ppt"]:
-        # PPT: Display as slides with navigation
-        file_info = api.get_file_info(submission_id)
-        slide_count = file_info.get("slide_count", 1)
-        
-        if slide_count > 0:
-            # Slide navigation
-            col1, col2, col3 = st.columns([1, 3, 1])
-            
-            with col1:
-                if st.button("⬅️ Previous"):
-                    if st.session_state.get("current_slide", 1) > 1:
-                        st.session_state.current_slide -= 1
-                        st.rerun()
-            
-            with col2:
-                current = st.session_state.get("current_slide", 1)
-                st.markdown(f"<center>Slide {current} of {slide_count}</center>", unsafe_allow_html=True)
-            
-            with col3:
-                if st.button("Next ➡️"):
-                    if st.session_state.get("current_slide", 1) < slide_count:
-                        st.session_state.current_slide += 1
-                        st.rerun()
-            
-            # Display current slide
-            current_slide = st.session_state.get("current_slide", 1)
-            slide_url = api.get_file_preview_url(submission_id, page=current_slide)
-            
-            try:
-                import requests
-                headers = {"Authorization": f"Bearer {token}"}
-                response = requests.get(slide_url, headers=headers)
-                
-                if response.status_code == 200:
-                    st.image(response.content, use_container_width=True)
-                else:
-                    st.error("Failed to load slide")
-            except Exception as e:
-                st.error(f"Error loading slide: {e}")
+        # PPT: Download link (can't render in frontend without backend conversion)
+        st.info("📊 Presentations can be previewed after download")
+        st.markdown(f"[📥 Download Presentation]({preview_url})")
     else:
         st.warning(f"Preview not available for {file_type} files")
+        st.markdown(f"[📥 Download File]({preview_url})")
 
 
 def show_file_info(submission_id: int):

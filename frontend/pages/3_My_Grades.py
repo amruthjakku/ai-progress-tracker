@@ -8,7 +8,7 @@ sys.path.append("..")
 from components.auth import require_auth
 from components.file_preview import show_file_preview, show_file_info
 from components.grading import show_grade_badge
-from utils.api import api
+from utils.supabase_api import api
 
 st.set_page_config(page_title="My Grades", page_icon="📈", layout="wide")
 

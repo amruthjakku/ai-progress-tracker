@@ -2,7 +2,7 @@
 Grading Component - Mark allocation and feedback
 """
 import streamlit as st
-from utils.api import api
+from utils.supabase_api import api
 
 
 def show_grading_form(submission_id: int, max_marks: int = 100, current_marks: int = None, current_feedback: str = None):
@@ -15,7 +15,13 @@ def show_grading_form(submission_id: int, max_marks: int = 100, current_marks: i
         current_marks: Existing marks if already reviewed
         current_feedback: Existing feedback if already reviewed
     """
-    st.subheader("📝 Grade Submission")
+    is_update = current_marks is not None
+    
+    if is_update:
+        st.subheader("✏️ Update Grade")
+        st.info(f"Current grade: **{current_marks}/{max_marks}**")
+    else:
+        st.subheader("📝 Grade Submission")
     
     with st.form(f"grading_form_{submission_id}"):
         # Marks input
@@ -63,7 +69,8 @@ def show_grading_form(submission_id: int, max_marks: int = 100, current_marks: i
         st.markdown("---")
         
         # Submit button
-        submitted = st.form_submit_button("💾 Save Grade", use_container_width=True, type="primary")
+        button_text = "💾 Update Grade" if is_update else "💾 Save Grade"
+        submitted = st.form_submit_button(button_text, use_container_width=True, type="primary")
         
         if submitted:
             result = api.create_review(submission_id, marks_slider, feedback)
